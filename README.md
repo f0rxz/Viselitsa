@@ -32,7 +32,7 @@ This is a command-line application written in Go that implements the classic "Vi
 1. Clone the repository:
    ```sh
    git clone https://github.com/f0rxz/Viselitsa.git
-   cd viselitsa-game
+   cd Viselitsa
    ```
 2. Build and run the game:
    ```sh
