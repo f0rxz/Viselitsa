@@ -14,9 +14,11 @@ type Game struct {
 }
 
 func NewGame() *Game {
-	rand.Seed(time.Now().UnixNano())
-	word := consts.Words[rand.Intn(len(consts.Words))]
-	discovered := make([]rune, len(word)/2)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	word := consts.Words[r.Intn(len(consts.Words))]
+
+	cyrillicHalfLen := len(word) / 2
+	discovered := make([]rune, cyrillicHalfLen)
 	for i := range discovered {
 		discovered[i] = '_'
 	}

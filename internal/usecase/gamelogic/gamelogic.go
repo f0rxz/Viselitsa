@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"viselitsa/internal/consts"
 	"viselitsa/internal/entity/game"
 	"viselitsa/pkg/utils"
@@ -30,8 +31,12 @@ func (g *GameLogic) RevealLetter(letter rune) bool {
 	return found
 }
 
-func (g *GameLogic) ShowResult() {
+func (g *GameLogic) ShowErrors() {
 	fmt.Println(consts.ViselitsaStages[g.game.Errors])
+}
+
+func (g *GameLogic) ShowResult() {
+	g.ShowErrors()
 	if g.game.Errors >= len(consts.ViselitsaStages)-1 {
 		fmt.Println("Вы проиграли! Загаданное слово было:", g.game.Word)
 	} else {
@@ -42,32 +47,53 @@ func (g *GameLogic) ShowResult() {
 func (g *GameLogic) Play() {
 	scanner := bufio.NewScanner(os.Stdin)
 
-	wordRunes := []rune(g.game.Word) //забыл что я оперирую символами как байт а не рунами...
-
-	for g.game.Errors < len(consts.ViselitsaStages)-1 && string(wordRunes) != string(g.game.Discovered) {
-		fmt.Println(consts.ViselitsaStages[g.game.Errors])
-		fmt.Println("Слово:", string(g.game.Discovered))
-		fmt.Print("Введите букву: ")
-
-		scanner.Scan()
-		input := scanner.Text()
-		if len([]rune(input)) != 1 {
-			fmt.Println("Введите только одну букву!")
+	for g.canContinue() {
+		g.displayGameState()
+		letter := g.getInput(scanner)
+		if letter == 0 {
 			continue
 		}
 
-		letter := []rune(input)[0]
-
-		if utils.Contains(g.game.Guessed, letter) {
+		if g.isLetterGuessed(letter) {
 			fmt.Println("Вы уже вводили эту букву!")
 			continue
 		}
 
-		g.game.Guessed = append(g.game.Guessed, letter)
-		if !g.RevealLetter(letter) {
-			g.game.Errors++
-		}
+		g.processGuess(letter)
 	}
 
 	g.ShowResult()
+}
+
+func (g *GameLogic) canContinue() bool {
+	return g.game.Errors < len(consts.ViselitsaStages)-1 && !utils.RuneSlicesEqual([]rune(g.game.Word), g.game.Discovered)
+}
+
+func (g *GameLogic) displayGameState() {
+	g.ShowErrors()
+	fmt.Println("Слово:", string(g.game.Discovered))
+}
+
+func (g *GameLogic) getInput(scanner *bufio.Scanner) rune {
+	fmt.Print("Введите букву: ")
+	scanner.Scan()
+	input := scanner.Text()
+
+	if len([]rune(input)) != 1 {
+		fmt.Println("Введите только одну букву!")
+		return 0
+	}
+
+	return []rune(input)[0]
+}
+
+func (g *GameLogic) isLetterGuessed(letter rune) bool {
+	return slices.Contains(g.game.Guessed, letter)
+}
+
+func (g *GameLogic) processGuess(letter rune) {
+	g.game.Guessed = append(g.game.Guessed, letter)
+	if !g.RevealLetter(letter) {
+		g.game.Errors++
+	}
 }
